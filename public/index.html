@@ -1,0 +1,340 @@
+<!doctype html>
+<html lang="en">
+<head>
+
+
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Link-in-Bio — ARJO</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/@tsparticles/preset-snow@3/tsparticles.preset.snow.bundle.min.js"></script>
+
+</head>
+
+<body>
+  <div id="tsparticles"></div>
+  
+  <!-- Letter Modal -->
+  <div id="letterModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2><i class="fas fa-envelope"></i> Send a Letter to ARJO</h2>
+        <span class="close">&times;</span>
+      </div>
+      <div class="modal-body">
+        <form id="letterForm">
+          <div class="form-group">
+            <label for="senderName">Your Name:</label>
+            <input type="text" id="senderName" name="senderName" placeholder="Enter your name" required>
+          </div>
+          <div class="form-group">
+            <label for="letterMessage">Your Message:</label>
+            <textarea id="letterMessage" name="letterMessage" placeholder="Write your letter here..." rows="6" required></textarea>
+          </div>
+          <div class="form-actions">
+            <button type="button" class="btn-cancel">Cancel</button>
+            <button type="submit" class="btn-send"><i class="fas fa-paper-plane"></i> Send Letter</button>
+          </div>
+        </form>
+        <div id="sendingStatus" class="status-message" style="display: none;">
+          <i class="fas fa-spinner fa-spin"></i> Sending your letter...
+        </div>
+        <div id="successMessage" class="status-message success" style="display: none;">
+          <i class="fas fa-check-circle"></i> Letter sent successfully! Thank you for reaching out.
+        </div>
+        <div id="errorMessage" class="status-message error" style="display: none;">
+          <i class="fas fa-exclamation-circle"></i> Failed to send letter. Please try again.
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="blur-overlay fade-in">
+    <div class="enter-text">click to enter...</div>
+  </div>
+  <div class="container">
+    <div class="card">
+      <div class="profile">
+        <img src="pp.png" alt="Profile Picture" class="avatar">
+        <h1 class="username">ARJO</h1>
+ 
+
+
+        <p>Editor · Football · IDK</p>
+      </div>
+
+      <div class="links">
+        <a href="https://www.instagram.com/arjo.ae2/" class="btn" target="_blank" rel="noopener noreferrer"><i class="fab fa-instagram"></i> Instagram</a>
+        <a href="https://www.youtube.com/@ArjoxAep" class="btn" target="_blank" rel="noopener noreferrer"><i class="fab fa-youtube"></i> YouTube</a>
+        <a href="https://discord.gg/GJjs8nm9ar" class="btn"><i class="fab fa-discord"></i> Discord</a>
+        <div class="custom-player">
+          <img src="ii.jpg" alt="Track Image" class="player-avatar">
+          <i class="fas fa-heart"></i>
+          <div class="player-time">0:00</div>
+          <div class="player-progress">
+            <div class="progress-bar"></div>
+          </div>
+          <div class="player-duration">3:21</div>
+          <button class="player-prev"><i class="fas fa-step-backward"></i></button>
+          <button class="player-play"><i class="fas fa-play"></i></button>
+          <button class="player-next"><i class="fas fa-step-forward"></i></button>
+        </div>
+        <audio id="audio" src="no_laying.mp3" style="display:none;"></audio>
+        <button id="play-button" class="btn" style="display:none;">Play Song</button>
+      </div>
+
+   <div class="footer">
+  <p>
+    <a href="#" id="letterLink">
+      SEND A LETTER  
+    </a>
+  </p>
+</div>
+
+<style>
+
+
+  .footer a {
+    color: #ff4d6d;     /* link color */
+    text-decoration: none;
+    font-weight: bold;
+  }
+
+  .footer a:hover {
+    color: #4CAF50;     /* link color on hover */
+  }
+</style>
+
+      </div>
+    </div>
+  </div>
+  <script>
+    const audio = document.getElementById('audio');
+    const playButton = document.querySelector('.player-play');
+    const progressBar = document.querySelector('.progress-bar');
+    const playerTime = document.querySelector('.player-time');
+    const playerDuration = document.querySelector('.player-duration');
+    const manualPlayButton = document.getElementById('play-button');
+    const blurOverlay = document.querySelector('.blur-overlay');
+
+    // Play audio and fade out blur overlay on click
+    blurOverlay.addEventListener('click', () => {
+      audio.muted = false;
+      audio.play().then(() => {
+        manualPlayButton.style.display = 'none';
+      }).catch(error => {
+        console.log("Playback error:", error);
+        manualPlayButton.style.display = 'block';
+      });
+      blurOverlay.classList.remove('fade-in');
+      blurOverlay.classList.add('fade-out');
+      setTimeout(() => {
+        blurOverlay.style.display = 'none';
+      }, 500); // Match the fade-out duration
+    });
+
+    // Update time and progress
+    audio.addEventListener('timeupdate', () => {
+      const currentTime = Math.floor(audio.currentTime);
+      const minutes = Math.floor(currentTime / 60);
+      const seconds = currentTime % 60;
+      playerTime.textContent = `${minutes}:${seconds < 10 ? '0' + seconds : seconds}`;
+      progressBar.style.width = (audio.currentTime / audio.duration * 100) + '%';
+
+      if (audio.paused && audio.ended) {
+        playButton.innerHTML = '<i class="fas fa-play"></i>';
+      } else if (!audio.paused) {
+        playButton.innerHTML = '<i class="fas fa-pause"></i>';
+      }
+    });
+
+    // Set total duration when metadata is loaded
+    audio.addEventListener('loadedmetadata', () => {
+      const duration = Math.floor(audio.duration);
+      const minutes = Math.floor(duration / 60);
+      const seconds = duration % 60;
+      playerDuration.textContent = `${minutes}:${seconds < 10 ? '0' + seconds : seconds}`;
+    });
+
+    // Play/Pause toggle
+    playButton.addEventListener('click', () => {
+      if (audio.paused) {
+        audio.play();
+        playButton.innerHTML = '<i class="fas fa-pause"></i>';
+      } else {
+        audio.pause();
+        playButton.innerHTML = '<i class="fas fa-play"></i>';
+      }
+    });
+
+    // Previous and Next buttons (5-second skips)
+    document.querySelector('.player-prev').addEventListener('click', () => {
+      audio.currentTime = Math.max(0, audio.currentTime - 5);
+    });
+
+    document.querySelector('.player-next').addEventListener('click', () => {
+      audio.currentTime = Math.min(audio.duration, audio.currentTime + 5);
+    });
+
+    // Manual play button click (if needed)
+    manualPlayButton.addEventListener('click', () => {
+      audio.muted = false;
+      audio.play();
+      manualPlayButton.style.display = 'none';
+    });
+
+    // // Initialize tsParticles snow effect
+    // (async () => {
+    //   await loadSnowPreset(tsParticles);
+    //   await tsParticles.load({
+    //     id: "tsparticles",
+    //     options: {
+    //       preset: "snow",
+    //       particles: {
+    //         number: { value: 150 },
+    //         color: { value: "#ffffff" },
+    //         shape: { type: "circle" },
+    //         opacity: { 
+    //           value: { min: 0.3, max: 0.8 },
+    //           animation: { enable: true, speed: 1, sync: false }
+    //         },
+    //         size: { 
+    //           value: { min: 1, max: 4 },
+    //           animation: { enable: true, speed: 2, sync: false }
+    //         },
+    //         move: {
+    //           enable: true,
+    //           speed: { min: 1, max: 3 },
+    //           direction: "bottom",
+    //           outModes: "out",
+    //           random: true,
+    //           straight: false
+    //         }
+    //       },
+    //       interactivity: {
+    //         events: {
+    //           onHover: { enable: true, mode: "bubble" },
+    //           resize: true
+    //         },
+    //         modes: {
+    //           bubble: {
+    //             distance: 100,
+    //             size: 6,
+    //             duration: 2,
+    //             opacity: 1
+    //           }
+    //         }
+    //       }
+    //     }
+    //   });
+    // })();
+
+    // Letter Modal Functionality
+    const modal = document.getElementById('letterModal');
+    const letterLink = document.getElementById('letterLink');
+    const closeBtn = document.querySelector('.close');
+    const cancelBtn = document.querySelector('.btn-cancel');
+    const letterForm = document.getElementById('letterForm');
+    const sendingStatus = document.getElementById('sendingStatus');
+    const successMessage = document.getElementById('successMessage');
+    const errorMessage = document.getElementById('errorMessage');
+
+    // Open modal when "Made with ❤️ by ARJO" is clicked
+    letterLink.addEventListener('click', (e) => {
+      e.preventDefault();
+      modal.style.display = 'block';
+      document.body.style.overflow = 'hidden'; // Prevent background scrolling
+    });
+
+    // Close modal functions
+    function closeModal() {
+      modal.style.display = 'none';
+      document.body.style.overflow = 'auto';
+      // Reset form and messages
+      letterForm.reset();
+      hideAllMessages();
+    }
+
+    function hideAllMessages() {
+      sendingStatus.style.display = 'none';
+      successMessage.style.display = 'none';
+      errorMessage.style.display = 'none';
+    }
+
+    // Close modal event listeners
+    closeBtn.addEventListener('click', closeModal);
+    cancelBtn.addEventListener('click', closeModal);
+
+    // Close modal when clicking outside of it
+    window.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        closeModal();
+      }
+    });
+
+    // Handle form submission
+    letterForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const senderName = document.getElementById('senderName').value.trim();
+      const letterMessage = document.getElementById('letterMessage').value.trim();
+      
+      if (!senderName || !letterMessage) {
+        return;
+      }
+
+      // Show sending status
+      hideAllMessages();
+      sendingStatus.style.display = 'block';
+      
+      // Disable send button
+      const sendBtn = document.querySelector('.btn-send');
+      sendBtn.disabled = true;
+
+      try {
+        // Send to Discord webhook
+        const webhookUrl = '/api/send-letter'; // We'll create this endpoint
+        
+        const response = await fetch(webhookUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            senderName: senderName,
+            message: letterMessage,
+            timestamp: new Date().toISOString()
+          })
+        });
+
+        if (response.ok) {
+          hideAllMessages();
+          successMessage.style.display = 'block';
+          letterForm.reset();
+          
+          // Auto-close modal after 3 seconds
+          setTimeout(() => {
+            closeModal();
+          }, 3000);
+        } else {
+          throw new Error('Failed to send letter');
+        }
+      } catch (error) {
+        console.error('Error sending letter:', error);
+        hideAllMessages();
+        errorMessage.style.display = 'block';
+      } finally {
+        sendBtn.disabled = false;
+      }
+    });
+
+    // Close modal with Escape key
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && modal.style.display === 'block') {
+        closeModal();
+      }
+    });
+  </script>
+</body>
+</html>
