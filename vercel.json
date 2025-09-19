@@ -1,10 +1,5 @@
 {
-  "version": 2,
-  "builds": [
-    { "src": "api/send-letter.js", "use": "@vercel/node" }
-  ],
-  "routes": [
-    { "src": "/api/send-letter", "dest": "/api/send-letter.js" },
-    { "src": "/(.*)", "dest": "/public/$1" }
-  ]
+  "version":2,
+  "builds": [{ "src": "api/send-letter.js", "use": "@vercel/node"}],
+  "routes":[{"src": "/(.*)", "dest": "/"}]
 }
