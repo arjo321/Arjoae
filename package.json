@@ -2,16 +2,13 @@
   "name": "arjo-website",
   "version": "1.0.0",
   "type": "module",
-  "main": "server.js",
   "engines": {
-    "node": "18.x"
-  },
-  "scripts": {
-    "start": "node api/server.js"
+    "node": "22.x"
   },
   "dependencies": {
-    "express": "^4.18.2",
     "node-fetch": "^3.3.2"
+  },
+  "scripts": {
+    "start": "node server.js"
   }
 }
-
