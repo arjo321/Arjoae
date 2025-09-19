@@ -294,7 +294,7 @@
 
       try {
         // Send to Discord webhook
-        const webhookUrl = '/api/send-letter'; // We'll create this endpoint
+        const webhookUrl = '/.netlify/functions/send-letter';   // We'll create this endpoint
 
         
         const response = await fetch(webhookUrl, {
