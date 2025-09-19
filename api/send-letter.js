@@ -1,91 +1,49 @@
-#!/usr/bin/env node
-import express from "express";
-import fetch from "node-fetch";
-import path from "path";
-import { fileURLToPath } from "url";
+import fetch from 'node-fetch';
 
-// Fix __dirname in ES modules
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+export default async function handler(req, res) {
+  if (req.method === 'POST') {
+    try {
+      const { senderName, message, timestamp } = req.body;
 
-const app = express();
-const PORT = 5000;
+      if (!senderName || !message) {
+        return res.status(400).json({ success: false, error: "Name and message are required" });
+      }
 
-// Discord webhook URL
-const WEBHOOK_URL = process.env.DISCORD_WEBHOOK || 
-  "https://discord.com/api/webhooks/1418507158026194955/EUdPK7qV6XHspyJvrPqxOgcEoTHrZJP2_DZ3okqcilrxlIZegGvmJv9KM4uLBNeU8-KZ";
+      const WEBHOOK_URL = process.env.DISCORD_WEBHOOK;
+      if (!WEBHOOK_URL) {
+        return res.status(500).json({ success: false, error: "Webhook URL not set" });
+      }
 
-// Middleware
-app.use(express.json());
+      const payload = {
+        embeds: [
+          {
+            title: "📮 New Letter Received!",
+            color: 0xff416c,
+            fields: [
+              { name: "👤 From", value: senderName, inline: true },
+              { name: "📅 Date", value: timestamp?.split('T')[0] ?? "Unknown", inline: true },
+              { name: "💌 Message", value: message, inline: false }
+            ],
+            footer: { text: "Sent from ARJO's Link-in-Bio Website" },
+            timestamp
+          }
+        ]
+      };
 
-// CORS support
-app.use((req, res, next) => {
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
-  next();
-});
+      const response = await fetch(WEBHOOK_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
 
-// Serve static files (HTML, CSS, images, JS)
-app.use(express.static(path.join(__dirname, "public")));
+      if (!response.ok) throw new Error(`Webhook failed with status ${response.status}`);
 
-// Fallback for root
-app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "index.html"));
-});
-
-// Handle letter submission
-app.post("/api/send-letter", async (req, res) => {
-  try {
-    const { senderName = "Anonymous", message = "", timestamp = "" } = req.body;
-
-    if (!senderName.trim() || !message.trim()) {
-      return res.status(400).json({ success: false, error: "Name and message are required" });
+      res.status(200).json({ success: true, message: "Letter sent successfully!" });
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ success: false, error: err.message });
     }
-
-    if (senderName.length > 60 || message.length > 1000) {
-      return res.status(400).json({ success: false, error: "Input too long" });
-    }
-
-    const discordPayload = {
-      embeds: [
-        {
-          title: "📮 New Letter Received!",
-          color: 0xff416c,
-          fields: [
-            { name: "👤 From", value: senderName.trim().slice(0, 60), inline: true },
-            { name: "📅 Date", value: timestamp ? timestamp.split("T")[0] : "Unknown", inline: true },
-            { name: "💌 Message", value: message.trim().slice(0, 1000), inline: false },
-          ],
-          footer: { text: "Sent from ARJO's Link-in-Bio Website" },
-          timestamp,
-        },
-      ],
-    };
-
-    const response = await fetch(WEBHOOK_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(discordPayload),
-    });
-
-    if (response.ok) {
-      res.json({ success: true, message: "Letter sent successfully!" });
-    } else {
-      throw new Error(`Discord webhook failed with status ${response.status}`);
-    }
-  } catch (err) {
-    console.error("Error sending letter:", err.message);
-    res.status(500).json({ success: false, error: err.message });
+  } else {
+    res.status(405).json({ success: false, error: "Method not allowed" });
   }
-});
-
-// Preflight for CORS
-app.options("/api/send-letter", (req, res) => {
-  res.sendStatus(200);
-});
-
-// Start server
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on http://localhost:${PORT}`);
-});
+}
